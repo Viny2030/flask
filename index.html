@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Análisis de Fraude en E-commerce</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2, h3 { color: navy; }
+        .dataframe { margin-top: 10px; border-collapse: collapse; width: 100%; }
+        .dataframe th, .dataframe td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .dataframe th { background-color: #f2f2f2; }
+        .warning { color: orange; font-weight: bold; }
+        .info { color: green; font-style: italic; }
+        .plot-container { margin-top: 20px; border: 1px solid #eee; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Análisis de Fraude en E-commerce</h1>
+
+    <h2>Dataset Cargado:</h2>
+    {{ head | safe }}
+
+    <form method="POST">
+        <h2>Análisis de Transacciones Fraudulentas</h2>
+        <label><input type="checkbox" name="show_fraud" {% if show_fraud %}checked{% endif %}> Mostrar análisis de transacciones fraudulentas</label>
+        {% if show_fraud %}
+            {% if fraud_results.fraud_analysis_warning %}
+                <p class="warning">{{ fraud_results.fraud_analysis_warning }}</p>
+            {% else %}
+                <h3>Identificación de Transacciones Fraudulentas (Regresión Logística)</h3>
+                <p><strong>Precisión del Modelo:</strong> {{ fraud_results.accuracy }}</p>
+                <p><strong>Reporte de Clasificación:</strong></p>
+                <pre>{{ fraud_results.classification_report }}</pre>
+                {% if fraud_results.fraud_prediction_plot %}
+                    <h3>Visualización de las Predicciones</h3>
+                    <div class="plot-container">
+                        <img src="data:image/png;base64,{{ fraud_results.fraud_prediction_plot }}" alt="Predicciones de Fraude">
+                    </div>
+                {% elif fraud_results.fraud_prediction_plot_warning %}
+                    <p class="warning">{{ fraud_results.fraud_prediction_plot_warning }}</p>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        <br>
+
+        <h2>Detección de Cuentas Falsas y Actividades Maliciosas</h2>
+        <label><input type="checkbox" name="show_fake" {% if show_fake %}checked{% endif %}> Mostrar detección de cuentas falsas</label>
+        {% if show_fake %}
+            {% if fake_accounts_results.fake_accounts_warning %}
+                <p class="warning">{{ fake_accounts_results.fake_accounts_warning }}</p>
+            {% else %}
+                <h3>Detección con Agrupamiento (DBSCAN en IPs)</h3>
+                <label for="eps_ip">Epsilon (eps) para DBSCAN (IP):</label>
+                <input type="number" step="0.05" name="eps_ip" value="{{ eps_ip }}">
+                <br>
+                <label for="min_samples_ip">Min Samples para DBSCAN (IP):</label>
+                <input type="number" name="min_samples_ip" value="{{ min_samples_ip }}">
+                <br>
+                <h3>Agrupamiento de IPs (DBSCAN):</h3>
+                {{ fake_accounts_results.ip_clusters_head | safe }}
+                <p><strong>Grupos de IP (Clusters):</strong> {{ fake_accounts_results.ip_clusters_unique }}</p>
+                <h3>Número de Transacciones Fraudulentas por Grupo de IP:</h3>
+                {{ fake_accounts_results.fraud_by_ip_group | safe }}
+                {% if fake_accounts_results.ip_clusters_plot %}
+                    <h3>Visualización de los Clusters de IP</h3>
+                    <div class="plot-container">
+                        <img src="data:image/png;base64,{{ fake_accounts_results.ip_clusters_plot }}" alt="Clusters de IP">
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        <br>
+
+        <h2>Análisis de Comportamiento del Usuario</h2>
+        <label><input type="checkbox" name="show_behavior" {% if show_behavior %}checked{% endif %}> Mostrar análisis de comportamiento del usuario</label>
+        {% if show_behavior %}
+            {% if user_behavior_results.user_behavior_warning %}
+                <p class="warning">{{ user_behavior_results.user_behavior_warning }}</p>
+            {% else %}
+                <h3>Detección de Fraude Basado en Frecuencia de Transacciones</h3>
+                <label for="frequency_threshold">Umbral de Frecuencia de Transacciones para Alta Actividad:</label>
+                <input type="number" name="frequency_threshold" value="{{ frequency_threshold }}">
+                <h3>Frecuencia de Transacciones por Usuario:</h3>
+                {{ user_behavior_results.user_frequency_head | safe }}
+                {% if user_behavior_results.high_activity_users %}
+                    <p class="warning">Usuarios con Alta Actividad (>{{ frequency_threshold }} transacciones): {{ user_behavior_results.high_activity_users }}...</p>
+                    <h3>Primeras Transacciones de Usuarios con Alta Actividad:</h3>
+                    {{ user_behavior_results.high_activity_transactions_head | safe }}
+                {% elif user_behavior_results.high_activity_message %}
+                    <p class="info">{{ user_behavior_results.high_activity_message }}</p>
+                {% endif %}
+                {% if user_behavior_results.frequency_distribution_plot %}
+                    <h3>Distribución de Frecuencia de Transacciones</h3>
+                    <div class="plot-container">
+                        <img src="data:image/png;base64,{{ user_behavior_results.frequency_distribution_plot }}" alt="Distribución de Frecuencia">
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        <br>
+        <input type="submit" value="Analizar">
+    </form>
+</body>
+</html>
